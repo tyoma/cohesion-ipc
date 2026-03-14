@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 include_directories($<$<PLATFORM_ID:Windows>:${CMAKE_CURRENT_LIST_DIR}/../compat/win32>)
 
 set(IPC_SOURCES
+	cancellable_read.${UWCPP}
 	client_endpoint.cpp
 	client_endpoint_sockets.cpp
 	client_endpoint_spawn.cpp

@@ -11,6 +11,7 @@ elseif (UNIX)
 endif()
 
 set(IPC_TESTS_SOURCES
+	CancellableReadStressTests.cpp
 	ClientSessionTests.cpp
 	EndpointSelectorTests.cpp
 	helpers.cpp
@@ -28,8 +29,10 @@ set(IPC_TESTS_SOURCES
 
 if (WIN32)
 	set(IPC_TESTS_SOURCES ${IPC_TESTS_SOURCES}
+		CancellableReadTests.win32.cpp
 		COMEndpointClientTests.cpp
 		COMEndpointServerTests.cpp
+		fake_read_primitives.cpp
 		helpers_com.cpp
 	)
 endif()
