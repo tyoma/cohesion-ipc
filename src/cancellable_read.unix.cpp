@@ -15,11 +15,11 @@ namespace coipc
 	{
 		struct unix_platform : cancellable_read::platform
 		{
-			virtual size_t read(FILE &file, void *buffer, size_t size) override
-			{	return ::fread(buffer, 1, size, &file);	}
+			virtual size_t read(FILE &/*file*/, void * /*buffer*/, size_t /*size*/) override
+			{	throw 0;	}
 
 			virtual bool cancel_io(void * /*thread_handle*/) override
-			{	return true;	}
+			{	throw 0;	}
 		};
 
 		unix_platform g_default_platform;
@@ -31,7 +31,7 @@ namespace coipc
 	class cancellable_read::impl
 	{
 	public:
-		impl(platform & /*platform_*/)
+		impl()
 			: _cancelled(false)
 		{
 			if (::pipe(_signal_pipe) < 0)
@@ -39,18 +39,14 @@ namespace coipc
 		}
 
 		~impl()
-		{
-			::close(_signal_pipe[0]);
-			::close(_signal_pipe[1]);
-		}
+		{	::close(_signal_pipe[0]), ::close(_signal_pipe[1]);	}
 
 		size_t read(FILE &file, void *buffer, size_t size)
 		{
-			auto data_fd = ::fileno(&file);
-
-			for (;;)
+			for (const auto data_fd = ::fileno(&file); ; )
 			{
 				fd_set rfds;
+
 				FD_ZERO(&rfds);
 				FD_SET(data_fd, &rfds);
 				FD_SET(_signal_pipe[0], &rfds);
@@ -62,10 +58,8 @@ namespace coipc
 					continue;
 				if (ready < 0)
 					throw runtime_error("select() failed");
-
 				if (FD_ISSET(_signal_pipe[0], &rfds))
 					throw cancelled_exception();
-
 				if (FD_ISSET(data_fd, &rfds))
 					return ::fread(buffer, 1, size, &file);
 			}
@@ -75,18 +69,14 @@ namespace coipc
 		{	::write(_signal_pipe[1], _signal_pipe, 1);	}
 
 	private:
-		impl(const impl &);
-		const impl &operator =(const impl &);
-
-	private:
 		mutex _mtx;
 		bool _cancelled;
 		int _signal_pipe[2];
 	};
 
 
-	cancellable_read::cancellable_read(platform &implementation)
-		: _impl(new impl(implementation))
+	cancellable_read::cancellable_read(platform &/*implementation*/)
+		: _impl(new impl())
 	{	}
 
 	cancellable_read::~cancellable_read()

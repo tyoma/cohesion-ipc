@@ -11,6 +11,7 @@ set(IPC_SOURCES
 	client_session.cpp
 	misc.cpp
 	server_endpoint.cpp
+	server_endpoint_stream.cpp
 	server_endpoint_sockets.cpp
 	server_session.cpp
 	socket_helpers.${UWCPP}

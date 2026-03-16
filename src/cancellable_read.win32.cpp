@@ -36,16 +36,17 @@ namespace coipc
 
 		size_t read(FILE &file, void *buffer, size_t size)
 		{
+			shared_ptr<void> this_thread(::OpenThread(THREAD_ALL_ACCESS, FALSE, GetCurrentThreadId()), &::CloseHandle);
+
 			{
 				lock_guard<mutex> l(_mtx);
 
 				if (_cancelled)
 					throw cancelled_exception();
-				_thread_handle = ::GetCurrentThread();
+				_thread_handle = this_thread.get();
 			}
 
 			auto bytes_read = _platform.read(file, buffer, size);
-
 			lock_guard<mutex> l(_mtx);
 
 			_thread_handle = nullptr;

@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <fcntl.h>
 #include <time.h>
 
 #ifdef _WIN32
-	#include <fcntl.h>
 	#include <io.h>
 #else
 	#include <unistd.h>
@@ -52,11 +52,15 @@ namespace coipc
 
 #ifdef _WIN32
 			if (!_pipe(fds, 4096, _O_BINARY))
-				return make_tuple(file_ptr(_fdopen(fds[0], "rb"), &fclose), file_ptr(_fdopen(fds[1], "wb"), &fclose));
 #else
-			if (!pipe(fds) != 0)
-				return make_tuple(file_ptr(fdopen(fds[0], "r"), &fclose), file_ptr(fdopen(fds[1], "w"), &fclose));
+			if (!pipe(fds))
 #endif
+			{
+				file_ptr read(fdopen(fds[0], "rb"), &fclose), write(fdopen(fds[1], "wb"), &fclose);
+
+				setvbuf(read.get(), nullptr, _IONBF, 0);
+				return make_tuple(read, write);
+			}
 			throw runtime_error("_pipe() failed");
 		}
 	}

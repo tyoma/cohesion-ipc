@@ -24,6 +24,7 @@ set(IPC_TESTS_SOURCES
 	SocketsEndpointServerTests.cpp
 	SpawnEndpointClientTests.cpp
 	SpawnEndpointServerTests.cpp
+	StreamEndpointServerTests.cpp
 	test_constants.cpp
 )
 
