@@ -1,7 +1,8 @@
 #pragma once
 
+#include <coipc/exceptions.h>
+
 #include <string>
-#include <stdexcept>
 
 namespace coipc
 {

@@ -1,5 +1,7 @@
 #include <coipc/spawn/endpoint.h>
 
+#include <coipc/exceptions.h>
+
 #include <io.h>
 #include <windows.h>
 

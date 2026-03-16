@@ -6,6 +6,7 @@
 #include "string.h"
 
 #include <coipc/com/init.h>
+#include <coipc/exceptions.h>
 #include <mt/event.h>
 #include <mt/thread.h>
 #include <ut/assert.h>

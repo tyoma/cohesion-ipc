@@ -2,6 +2,8 @@
 
 #include "helpers.h"
 
+#include <coipc/exceptions.h>
+
 #include <atomic>
 #include <thread>
 

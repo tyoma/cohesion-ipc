@@ -2,6 +2,7 @@
 
 #include "fake_read_primitives.h"
 
+#include <coipc/exceptions.h>
 #include <ut/assert.h>
 #include <ut/test.h>
 

@@ -2,6 +2,8 @@
 
 #include "socket_helpers.h"
 
+#include <coipc/exceptions.h>
+
 #include <arpa/inet.h>
 #include <logger/log.h>
 #include <mt/thread.h>

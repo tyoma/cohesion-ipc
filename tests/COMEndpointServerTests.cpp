@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <coipc/com/init.h>
+#include <coipc/exceptions.h>
 #include <memory>
 #include <mt/thread.h>
 #include <ut/assert.h>

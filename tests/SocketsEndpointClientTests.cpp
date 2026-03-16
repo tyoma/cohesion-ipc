@@ -4,6 +4,7 @@
 #include "helpers_sockets.h"
 #include "mocks.h"
 
+#include <coipc/exceptions.h>
 #include <mt/event.h>
 #include <mt/thread.h>
 #include <ut/assert.h>

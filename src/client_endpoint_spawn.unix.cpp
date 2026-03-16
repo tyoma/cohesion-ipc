@@ -1,6 +1,7 @@
 #include <coipc/spawn/endpoint.h>
 
 #include <memory>
+#include <stdexcept>
 #include <unistd.h>
 
 using namespace std;

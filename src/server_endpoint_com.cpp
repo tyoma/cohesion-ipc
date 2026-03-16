@@ -1,5 +1,6 @@
 #include <coipc/com/endpoint.h>
 
+#include <coipc/exceptions.h>
 #include <coipc/misc.h>
 #include <coipc/range.h>
 

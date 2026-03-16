@@ -1,8 +1,10 @@
 #include <coipc/endpoint.h>
 
-#include <atlbase.h>
 #include <coipc/com/init.h>
+#include <coipc/exceptions.h>
 #include <coipc/misc.h>
+
+#include <atlbase.h>
 #include <functional>
 
 using namespace std;

@@ -6,6 +6,7 @@
 #include "path.h"
 #include "time.h"
 
+#include <coipc/exceptions.h>
 #include <coipc/types.h>
 #include <mt/event.h>
 #include <ut/assert.h>
@@ -35,9 +36,9 @@ namespace coipc
 #ifdef _WIN32
 				// INIT / ACT / ASSERT
 				assert_throws(spawn::connect_client("zubazuba", vector<string>(), inbound),
-					spawn::server_exe_not_found);
+					server_exe_not_found);
 				assert_throws(spawn::connect_client(~constants::c_this_module & normalize::exe("abc\\guinea_ipc_spawn"),
-					vector<string>(), inbound), spawn::server_exe_not_found);
+					vector<string>(), inbound), server_exe_not_found);
 #else
 				// INIT
 				inbound.on_disconnect = [&] {	ready.set();	};

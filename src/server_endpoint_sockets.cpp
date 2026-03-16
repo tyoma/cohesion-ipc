@@ -1,5 +1,6 @@
 #include "server_endpoint_sockets.h"
 
+#include <coipc/exceptions.h>
 #include <coipc/noncopyable.h>
 
 #include <arpa/inet.h>

@@ -1,8 +1,9 @@
 #include <coipc/cancellable_read.h>
 
+#include <coipc/exceptions.h>
+
 #include <atomic>
 #include <mutex>
-
 #include <windows.h>
 
 using namespace std;

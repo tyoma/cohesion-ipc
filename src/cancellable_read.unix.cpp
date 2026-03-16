@@ -1,8 +1,9 @@
 #include <coipc/cancellable_read.h>
 
-#include <mutex>
+#include <coipc/exceptions.h>
 
 #include <errno.h>
+#include <mutex>
 #include <sys/select.h>
 #include <unistd.h>
 

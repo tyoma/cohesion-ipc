@@ -1,6 +1,7 @@
 #include <coipc/endpoint.h>
 
 #include <coipc/com/init.h>
+#include <coipc/exceptions.h>
 #include <coipc/misc.h>
 
 #include "helpers.h"

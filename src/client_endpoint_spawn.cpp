@@ -1,16 +1,13 @@
 #include <coipc/spawn/endpoint.h>
 
+#include <coipc/exceptions.h>
+
 using namespace std;
 
 namespace coipc
 {
 	namespace spawn
 	{
-		server_exe_not_found::server_exe_not_found(const char *message)
-			: connection_refused(message)
-		{	}
-
-
 		client_session::client_session(const string &spawned_path, const vector<string> &arguments, channel &inbound)
 		{
 			auto pipes = spawn(spawned_path, arguments);

@@ -5,10 +5,6 @@
 
 namespace coipc
 {
-	struct cancelled_exception : public std::exception
-	{
-    };
-
 	class cancellable_read
 	{
 	public:
@@ -17,7 +13,7 @@ namespace coipc
 	public:
 		cancellable_read(platform &implementation = default_implementation);
 		~cancellable_read();
-		
+
 		std::size_t read(std::FILE &file, void *buffer, std::size_t size);
 		
 		// Post-condition: all read requests made past this call will throw cancelled_exception.
@@ -25,7 +21,7 @@ namespace coipc
 		void cancel();
 
 	public:
-        static platform &default_implementation;
+		static platform &default_implementation;
 		
 	private:
 		class impl;
