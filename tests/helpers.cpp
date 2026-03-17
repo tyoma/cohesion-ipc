@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <fcntl.h>
+#include <stdexcept>
 #include <time.h>
 
 #ifdef _WIN32

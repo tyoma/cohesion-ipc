@@ -1,13 +1,7 @@
-#include <coipc/stream.h>
+#include <coipc/strmd/stream.h>
 
 namespace coipc
 {
-	insufficient_buffer_error::insufficient_buffer_error(size_t requested_, size_t available_)
-		: std::runtime_error("buffer is smaller than requested to read"), requested(requested_), available(available_)
-	{	}
-
-
-
 	buffer_reader::buffer_reader(const_byte_range payload)
 		: _ptr(payload.begin()), _remaining(payload.length())
 	{	}

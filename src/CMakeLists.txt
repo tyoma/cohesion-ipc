@@ -8,15 +8,20 @@ set(IPC_SOURCES
 	client_endpoint_sockets.cpp
 	client_endpoint_spawn.cpp
 	client_endpoint_spawn.${UWCPP}
-	client_session.cpp
 	misc.cpp
 	server_endpoint.cpp
 	server_endpoint_stream.cpp
 	server_endpoint_sockets.cpp
-	server_session.cpp
 	socket_helpers.${UWCPP}
-	stream.cpp
 )
+
+if (NOT COIPC_NO_STRMD)
+	set(IPC_SOURCES ${IPC_SOURCES}
+		strmd/client_session.cpp
+		strmd/server_session.cpp
+		strmd/stream.cpp
+	)
+endif()
 
 if (WIN32)
 	set(IPC_SOURCES ${IPC_SOURCES}

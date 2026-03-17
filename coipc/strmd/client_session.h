@@ -1,12 +1,15 @@
 #pragma once
 
-#include "endpoint.h"
 #include "serialization.h"
+
+#include "../endpoint.h"
 
 #include <functional>
 #include <map>
 
 namespace coipc
+{
+namespace strmd
 {
 	class client_session : public channel
 	{
@@ -117,7 +120,7 @@ namespace coipc
 	{
 		_buffer.clear();
 		buffer_writer< std::vector<std::uint8_t> > w(_buffer);
-		coipc::serializer s(w);
+		serializer s(w);
 		auto token = _token++;
 
 		s(id);
@@ -126,4 +129,5 @@ namespace coipc
 		callback_ctor(token);
 		_outbound->message(const_byte_range(_buffer.data(), _buffer.size()));
 	}
+}
 }

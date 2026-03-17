@@ -1,8 +1,10 @@
-#include <coipc/server_session.h>
+#include <coipc/strmd/server_session.h>
 
 using namespace std;
 
 namespace coipc
+{
+namespace strmd
 {
 	server_session::server_session(channel &outbound, tasker::queue *apartment)
 		: _outbound(outbound), _apartment_queue(apartment ? new tasker::private_queue(*apartment) : nullptr)
@@ -62,4 +64,5 @@ namespace coipc
 			throw logic_error("deferring is disabled - no queue");
 		continuation = continuation_handler;
 	}
+}
 }

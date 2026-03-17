@@ -3,6 +3,7 @@
 #include "helpers.h"
 #include "mocks.h"
 
+#include <list>
 #include <mt/event.h>
 #include <mt/thread.h>
 #include <ut/assert.h>

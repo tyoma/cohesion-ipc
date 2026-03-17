@@ -7,7 +7,7 @@ namespace coipc
 	struct cancelled_exception : std::exception
 	{
 		cancelled_exception();
-    };
+	};
 
 	struct initialization_failed : std::runtime_error
 	{
@@ -27,6 +27,13 @@ namespace coipc
 	struct server_exe_not_found : connection_refused
 	{
 		server_exe_not_found(const char *message);
+	};
+
+	struct insufficient_buffer_error : std::runtime_error
+	{
+		insufficient_buffer_error(std::size_t requested_, std::size_t available_);
+
+		std::size_t requested, available;
 	};
 
 
@@ -52,5 +59,9 @@ namespace coipc
 
 	inline server_exe_not_found::server_exe_not_found(const char *message)
 		: connection_refused(message)
+	{	}
+
+	inline insufficient_buffer_error::insufficient_buffer_error(std::size_t requested_, std::size_t available_)
+		: std::runtime_error("buffer is smaller than requested to read"), requested(requested_), available(available_)
 	{	}
 }

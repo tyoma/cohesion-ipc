@@ -9,6 +9,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(COIPC_NO_TESTS "Do not build test modules." OFF)
+option(COIPC_NO_STRMD "Do not build strmd server/client sessions." OFF)
+
+if (NOT COIPC_NO_TESTS)
+	set(COIPC_NO_STRMD OFF) # Force strmd to build.
+endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/_lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/_bin)
@@ -47,7 +52,7 @@ else ()
 endif()
 
 
-if (NOT TARGET strmd)
+if (NOT TARGET strmd AND (NOT COIPC_NO_STRMD))
 	set(STRMD_NO_TESTS ON)
 	add_subdirectory(libraries/strmd)
 endif()

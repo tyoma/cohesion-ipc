@@ -1,20 +1,12 @@
 #pragma once
 
-#include "noncopyable.h"
-#include "range.h"
-#include "types.h"
-
-#include <stdexcept>
+#include "../exceptions.h"
+#include "../noncopyable.h"
+#include "../range.h"
+#include "../types.h"
 
 namespace coipc
 {
-	struct insufficient_buffer_error : std::runtime_error
-	{
-		insufficient_buffer_error(std::size_t requested_, std::size_t available_);
-
-		std::size_t requested, available;
-	};
-
 	class buffer_reader : noncopyable
 	{
 	public:

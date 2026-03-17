@@ -1,15 +1,18 @@
 #pragma once
 
-#include "argument_traits.h"
-#include "endpoint.h"
-#include "noncopyable.h"
 #include "serialization.h"
+
+#include "../argument_traits.h"
+#include "../endpoint.h"
+#include "../noncopyable.h"
 
 #include <functional>
 #include <tasker/private_queue.h>
 #include <unordered_map>
 
 namespace coipc
+{
+namespace strmd
 {
 	class server_session : public channel, noncopyable
 	{
@@ -138,4 +141,5 @@ namespace coipc
 			response_formatter(ser);
 		});
 	}
+}
 }
