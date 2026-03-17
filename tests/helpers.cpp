@@ -55,12 +55,7 @@ namespace coipc
 #else
 			if (!pipe(fds))
 #endif
-			{
-				file_ptr read(fdopen(fds[0], "rb"), &fclose), write(fdopen(fds[1], "wb"), &fclose);
-
-				setvbuf(read.get(), nullptr, _IONBF, 0);
-				return make_tuple(read, write);
-			}
+				return make_tuple(file_ptr(fdopen(fds[0], "rb"), &fclose), file_ptr(fdopen(fds[1], "wb"), &fclose));
 			throw runtime_error("_pipe() failed");
 		}
 	}

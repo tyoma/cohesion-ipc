@@ -25,6 +25,7 @@ namespace coipc
 							_reader.read(inbound, buffer.data(), size);
 							session->message(const_byte_range(buffer.data(), size));
 						}
+						session->disconnect();
 					}
 					catch (...)
 					{
@@ -42,7 +43,13 @@ namespace coipc
 			{	}
 
 			virtual void message(const_byte_range payload)
-			{	}
+			{
+				unsigned int length = payload.length();
+
+				fwrite(reinterpret_cast<const char*>(&length), sizeof length, 1, &_outbound);
+				fwrite(reinterpret_cast<const char*>(payload.data()), 1, length, &_outbound);
+				fflush(&_outbound);
+			}
 
 		private:
 			FILE &_outbound;
@@ -50,6 +57,7 @@ namespace coipc
 			mt::thread _worker;
 		};
 
+		setvbuf(&inbound, nullptr, _IONBF, 0);
 		return make_shared<stream_session_connector>(inbound, outbound, new_server_session);
 	}
 }

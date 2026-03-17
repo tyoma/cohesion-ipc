@@ -14,18 +14,30 @@ namespace coipc
 {
 	namespace tests
 	{
-		begin_test_suite( AStreamEndpointServerTests )
+		begin_test_suite( StreamEndpointServerTests )
+			list<mt::thread> threads_to_join;
+
+			template <typename T>
+			void run_thread(const T &thead_function)
+			{	threads_to_join.emplace_back(thead_function);	}
+
+			teardown( JoinThreads )
+			{
+				for (auto &t : threads_to_join)
+					t.join();
+			}
+
 			test( NewSessionUnconditionallyGetsCreatedInNewThreadAndThenDestroyedUponServerRelease )
 			{
 				// INIT
 				mt::event session_created_event, session_destroyed_event;
-				auto pipe1 = create_pipe(); // server reads from pipe1
-				auto pipe2 = create_pipe(); // server writes to pipe2
+				auto inbound = create_pipe(); // server reads from pipe1
+				auto outbound = create_pipe(); // server writes to pipe2
 				shared_ptr<mocks::session> created_session;
 				mt::thread::id server_thread_id;
 
 				// ACT
-				auto h = stream::connect(*get<0>(pipe1), *get<1>(pipe2), [&] (channel &/*outbound*/) {
+				auto h = stream::connect(*get<0>(inbound), *get<1>(outbound), [&] (channel &/*outbound*/) {
 					created_session = make_shared<mocks::session>();
 					server_thread_id = mt::this_thread::get_id();
 					session_created_event.set();
@@ -100,6 +112,107 @@ namespace coipc
 				// ASSERT
 				assert_equal(3u, created_session->payloads_log.size());
 				assert_equal(payload3, created_session->payloads_log.back());
+			}
+
+
+			test( OutboundMessagesAreSentAsExpected )
+			{
+				// INIT
+				mt::event session_created, ready_to_read;
+				auto inbound = create_pipe(); // server reads from pipe1
+				auto outbound = create_pipe(); // server writes to pipe2
+				shared_ptr<mocks::session> session;
+				auto h = stream::connect(*get<0>(inbound), *get<1>(outbound), [&] (channel &outbound) {
+					session = make_shared<mocks::session>();
+					session->outbound = &outbound;
+					session_created.set();
+					return session;
+				});
+				byte payload1[] = { 13, 1, };
+				byte payload2[] = { 7, 9, 11, 19, 2, 7 };
+				byte payload3[50000] = { 7, 9, 0, 1, 2, 7, };
+				unsigned int bytes_to_read;
+				vector<byte> buffer_to_read;
+
+				session_created.wait();
+
+				// ACT
+				run_thread([&] {	session->outbound->message(const_byte_range(payload1, sizeof payload1));	});
+
+				// ASSERT
+				fread(&bytes_to_read, sizeof bytes_to_read, 1, get<0>(outbound).get());
+				assert_equal(sizeof payload1, bytes_to_read);
+				buffer_to_read.resize(bytes_to_read);
+				fread(buffer_to_read.data(), bytes_to_read, 1, get<0>(outbound).get());
+				assert_equal(payload1, buffer_to_read);
+
+				// ACT
+				run_thread([&] {	session->outbound->message(const_byte_range(payload2, sizeof payload2));	});
+				
+				// ASSERT
+				fread(&bytes_to_read, sizeof bytes_to_read, 1, get<0>(outbound).get());
+				assert_equal(sizeof payload2, bytes_to_read);
+				buffer_to_read.resize(bytes_to_read);
+				fread(buffer_to_read.data(), bytes_to_read, 1, get<0>(outbound).get());
+				assert_equal(payload2, buffer_to_read);
+
+				// ACT
+				run_thread([&] {	session->outbound->message(const_byte_range(payload3, sizeof payload3));	});
+
+				// ASSERT
+				fread(&bytes_to_read, sizeof bytes_to_read, 1, get<0>(outbound).get());
+				assert_equal(sizeof payload3, bytes_to_read);
+				buffer_to_read.resize(bytes_to_read);
+				fread(buffer_to_read.data(), bytes_to_read, 1, get<0>(outbound).get());
+				assert_equal(payload3, buffer_to_read);
+			}
+
+
+			test( SessionReceivesDisconnectWhenWriterSideOfInboundPipeIsClosed )
+			{
+				// INIT
+				mt::event ready;
+				auto inbound = create_pipe(); // server reads from pipe1
+				auto outbound = create_pipe(); // server writes to pipe2
+				shared_ptr<mocks::session> session;
+				auto h = stream::connect(*get<0>(inbound), *get<1>(outbound), [&] (channel &/*outbound*/) {
+					session = make_shared<mocks::session>();
+					session->disconnected = [&] {	ready.set();	};
+					ready.set();
+					return session;
+				});
+
+				ready.wait();
+
+				// ACT
+				get<1>(inbound).reset();
+
+				// ACT / ASSERT
+				ready.wait();
+			}
+
+
+			test( SessionDoesNotReceiveDisconnectWhenServerSessionIsStoppedLocally )
+			{
+				// INIT
+				mt::event ready;
+				auto inbound = create_pipe(); // server reads from pipe1
+				auto outbound = create_pipe(); // server writes to pipe2
+				shared_ptr<mocks::session> session;
+				auto h = stream::connect(*get<0>(inbound), *get<1>(outbound), [&] (channel &/*outbound*/) {
+					session = make_shared<mocks::session>();
+					session->disconnected = [&] {	ready.set();	};
+					ready.set();
+					return session;
+				});
+
+				ready.wait();
+
+				// ACT
+				h.reset();
+
+				// ASSERT
+				assert_equal(0u, session->disconnections);
 			}
 
 		end_test_suite
