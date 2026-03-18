@@ -12,19 +12,19 @@ endif()
 
 set(IPC_TESTS_SOURCES
 	CancellableReadStressTests.cpp
-	ClientSessionTests.cpp
 	EndpointSelectorTests.cpp
 	helpers.cpp
 	helpers_sockets.cpp
 	module.${PCPP}
 	path.cpp
-	ServerSessionContinuationTests.cpp
-	ServerSessionTests.cpp
 	SocketsEndpointClientTests.cpp
 	SocketsEndpointServerTests.cpp
 	SpawnEndpointClientTests.cpp
 	SpawnEndpointServerTests.cpp
 	StreamEndpointServerTests.cpp
+	StrmdClientSessionTests.cpp
+	StrmdServerSessionContinuationTests.cpp
+	StrmdServerSessionTests.cpp
 	test_constants.cpp
 )
 

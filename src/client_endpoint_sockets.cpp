@@ -1,5 +1,6 @@
 #include <coipc/endpoint_sockets.h>
 
+#include "helpers.h"
 #include "socket_helpers.h"
 
 #include <coipc/exceptions.h>
@@ -29,26 +30,33 @@ namespace coipc
 			virtual void message(const_byte_range payload);
 
 		private:
-			void worker(channel *inbound);
 			static int open(const host_port &hp);
 
 		private:
 			sockets_initializer _initializer;
 			socket_handle _socket;
-			unique_ptr<mt::thread> _thread;
+			mt::thread _thread;
 		};
 
 
 
 		client_session::client_session(const host_port &hp, channel &inbound)
-			: _socket(open(hp))
-		{	_thread.reset(new mt::thread(bind(&client_session::worker, this, &inbound)));	}
+			: _socket(open(hp)), _thread([this, &inbound] {
+				LOG(PREAMBLE "processing thread started...") % A(&inbound);
+				read_messages(inbound, [&] (void *buffer, unsigned int size) {
+					return ::recv(_socket, static_cast<char *>(buffer), size, MSG_WAITALL);
+				}, true);
+				LOG(PREAMBLE "disconnecting from the server...") % A(&inbound);
+				inbound.disconnect();
+				LOG(PREAMBLE "processing thread ended.");
+			})
+		{	}
 
 		client_session::~client_session()
 		{
 			::shutdown(_socket, SHUT_RDWR);
 			_socket.reset();
-			_thread->join();
+			_thread.join();
 		}
 
 		void client_session::disconnect() throw()
@@ -56,37 +64,19 @@ namespace coipc
 
 		void client_session::message(const_byte_range payload)
 		{
-			unsigned int size_ = static_cast<unsigned int>(payload.length());
-			sockets::byte_representation<unsigned int> size;
+			const auto size_ = static_cast<unsigned int>(payload.length());
+			byte_representation<unsigned int> size;
 
 			size.value = size_;
 			size.reorder();
 			::send(_socket, size.bytes, sizeof(size.bytes), MSG_NOSIGNAL);
-			::send(_socket, reinterpret_cast<const char *>(payload.begin()), size_, MSG_NOSIGNAL);
-		}
-
-		void client_session::worker(channel *inbound)
-		{
-			byte_representation<unsigned int> size;
-			vector<uint8_t> buffer;
-
-			LOG(PREAMBLE "processing thread started...") % A(inbound);
-			while (::recv(_socket, size.bytes, sizeof(size), MSG_WAITALL) == (int)sizeof(size))
-			{
-				size.reorder();
-				buffer.resize(size.value);
-				::recv(_socket, (char *)&buffer[0], size.value, MSG_WAITALL);
-				inbound->message(const_byte_range(&buffer[0], buffer.size()));
-			}
-			LOG(PREAMBLE "disconnecting from the server...") % A(inbound);
-			inbound->disconnect();
-			LOG(PREAMBLE "processing thread ended.");
+			::send(_socket, reinterpret_cast<const char *>(payload.data()), size_, MSG_NOSIGNAL);
 		}
 
 		int client_session::open(const host_port &hp)
 		{
-			sockaddr_in service = make_sockaddr_in(hp.host.c_str(), hp.port);
-			int hsocket = static_cast<int>(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+			auto service = make_sockaddr_in(hp.host.c_str(), hp.port);
+			auto hsocket = static_cast<int>(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
 
 			if (-1 == hsocket)
 				throw initialization_failed("socket creation failed");
@@ -103,7 +93,7 @@ namespace coipc
 		{
 			host_port hp(destination_endpoint_id);
 
-			return channel_ptr_t(new client_session(hp, inbound));
+			return make_shared<client_session>(hp, inbound);
 		}
 	}
 }

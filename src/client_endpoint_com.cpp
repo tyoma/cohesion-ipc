@@ -93,9 +93,9 @@ namespace coipc
 		client_session::client_session(const char *destination_endpoint_id, channel &inbound)
 			: _inbound(inbound)
 		{
-			shared_ptr<void> ctx = create_activation_context();
-			shared_ptr<void> ctx_lock = lock_activation_context(ctx);
-			const guid_t id = guid_from_string(destination_endpoint_id);
+			auto ctx = create_activation_context();
+			auto ctx_lock = lock_activation_context(ctx);
+			const auto id = guid_from_string(destination_endpoint_id);
 			CComPtr<inbound_stream> sink(new inbound_stream(inbound));
 
 			if (S_OK != _stream.CoCreateInstance(id, NULL, CLSCTX_LOCAL_SERVER))
@@ -122,7 +122,7 @@ namespace coipc
 			ctx.lpResourceName = ISOLATIONAWARE_MANIFEST_RESOURCE_ID;
 			ctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
 
-			HANDLE hcontext = ::CreateActCtx(&ctx);
+			auto hcontext = ::CreateActCtx(&ctx);
 
 			return INVALID_HANDLE_VALUE == hcontext
 				? shared_ptr<void>()
@@ -133,13 +133,15 @@ namespace coipc
 		{
 			ULONG_PTR cookie;
 
-			return ctx && ::ActivateActCtx(ctx.get(), &cookie)
-				? shared_ptr<void>(reinterpret_cast<void*>(cookie), bind(&::DeactivateActCtx, 0, cookie))
-				: shared_ptr<void>();
+			if (!ctx || !::ActivateActCtx(ctx.get(), &cookie))
+				return shared_ptr<void>();
+			return shared_ptr<void>(reinterpret_cast<void *>(cookie), [cookie] (void *) {
+				::DeactivateActCtx(0, cookie);
+			});
 		}
 
 
 		channel_ptr_t connect_client(const char *destination_endpoint_id, channel &inbound)
-		{	return channel_ptr_t(new client_session(destination_endpoint_id, inbound));	}
+		{	return make_shared<client_session>(destination_endpoint_id, inbound);	}
 	}
 }

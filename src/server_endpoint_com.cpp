@@ -104,9 +104,11 @@ namespace coipc
 			DWORD cookie;
 
 			p->set_server(sf);
-			if (S_OK == ::CoRegisterClassObject(id, p, CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &cookie))
-				return shared_ptr<void>(static_cast<IUnknown *>(p), bind(&::CoRevokeClassObject, cookie));
-			throw initialization_failed(endpoint_id);
+			if (S_OK != ::CoRegisterClassObject(id, p, CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &cookie))
+				throw initialization_failed(endpoint_id);
+			return shared_ptr<void>(static_cast<IUnknown *>(p), [cookie] (void *) {
+				::CoRevokeClassObject(cookie);
+			});
 		}
 	}
 }

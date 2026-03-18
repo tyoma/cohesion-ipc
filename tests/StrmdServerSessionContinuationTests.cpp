@@ -18,7 +18,7 @@ namespace coipc
 		{
 			using namespace coipc::tests;
 
-			begin_test_suite( ServerSessionContinuationTests )
+			begin_test_suite( StrmdServerSessionContinuationTests )
 				mocks::channel outbound;
 				shared_ptr<mocks::queue> apartment_queue;
 

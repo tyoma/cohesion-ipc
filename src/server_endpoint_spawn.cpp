@@ -1,5 +1,7 @@
 #include <coipc/endpoint_spawn.h>
 
+#include "helpers.h"
+
 #ifdef WIN32
 	#include <fcntl.h>
 	#include <io.h>
@@ -39,8 +41,6 @@ int main(int argc, const char *argv[])
 	_setmode(_fileno(stdout), O_BINARY);
 #endif
 
-	unsigned int size;
-	vector<uint8_t> buffer;
 	vector<string> arguments;
 	pipe_channel outbound(stdout);
 
@@ -49,12 +49,9 @@ int main(int argc, const char *argv[])
 
 	const auto instance = spawn::create_session(arguments, outbound);
 
-	while (fread(&size, sizeof size, 1, stdin))
-	{
-		buffer.resize(size);
-		fread(buffer.data(), 1, size, stdin); // TODO: check for abruption here
-		instance->message(const_byte_range(buffer.data(), size));
-	}
+	read_messages(*instance, [] (void *buffer, size_t size) {
+		return fread(buffer, 1, size, stdin);
+	}, false);
 	instance->disconnect();
 	return 0;
 }

@@ -5,8 +5,7 @@
 #include <coipc/exceptions.h>
 
 #include <atomic>
-#include <thread>
-
+#include <mt/thread.h>
 #include <ut/assert.h>
 #include <ut/test.h>
 
@@ -45,7 +44,7 @@ namespace coipc
 					char buffer[1] = { };
 
 					// ACT
-					thread reader([&] {
+					mt::thread reader([&] {
 						try
 						{	r.read(*get<0>(pp), buffer, sizeof(buffer));	}
 						catch (const cancelled_exception &)
@@ -74,7 +73,7 @@ namespace coipc
 					cancellable_read r;
 
 					// ACT
-					thread reader([&] {
+					mt::thread reader([&] {
 						try
 						{
 							char buffer[1];
@@ -87,11 +86,10 @@ namespace coipc
 						}
 					});
 
-					thread writer([&] {
+					mt::thread writer([&] {
 						feed_bytes(*get<1>(pp), 1);
 					});
 
-					this_thread::yield();
 					r.cancel();
 					reader.join();
 					writer.join();
@@ -116,7 +114,7 @@ namespace coipc
 					char buffer[1] = { };
 
 					// ACT
-					thread reader([&] {
+					mt::thread reader([&] {
 						for (auto j = 0u; j < n_reads_before_cancel; ++j)
 						{
 							try
@@ -130,7 +128,6 @@ namespace coipc
 					});
 
 					feed_bytes(*get<1>(pp), n_reads_before_cancel);
-					this_thread::yield();
 					r.cancel();
 					reader.join();
 

@@ -1,5 +1,7 @@
 #include "server_endpoint_sockets.h"
 
+#include "helpers.h"
+
 #include <coipc/exceptions.h>
 #include <coipc/noncopyable.h>
 
@@ -139,9 +141,11 @@ namespace coipc
 				throw initialization_failed("listen() failed");
 
 			_aux_socket.reset(connect_aux(hp.port));
-			_handlers.push_back(socket_handler::ptr_t(new socket_handler(_next_id++, server_socket,
-				_aux_socket, bind(&server::accept_preinit, this, _2))));
-			_server_thread.reset(new mt::thread(bind(&socket_handler::run<handlers_t>, ref(_handlers))));
+			_handlers.push_back(make_shared<socket_handler>(_next_id++, server_socket, _aux_socket,
+				bind(&server::accept_preinit, this, _2)));
+			_server_thread.reset(new mt::thread([this] {
+				socket_handler::run(_handlers);
+			}));
 		}
 
 		server::~server()
@@ -177,8 +181,8 @@ namespace coipc
 			socket_handle new_connection(::accept(s, NULL, NULL));
 
 			setup_socket(new_connection);
-			_handlers.push_back(socket_handler::ptr_t(new socket_handler(_next_id++, new_connection,
-				_aux_socket, bind(&server::handle_preinit, this, _1, _2))));
+			_handlers.push_back(make_shared<socket_handler>(_next_id++, new_connection, _aux_socket,
+				bind(&server::handle_preinit, this, _1, _2)));
 			return socket_handler::proceed;
 		}
 
@@ -188,7 +192,7 @@ namespace coipc
 
 			setup_socket(new_connection);
 
-			socket_handler::ptr_t h(new socket_handler(_next_id++, new_connection, _aux_socket, &dummy));
+			const auto h = make_shared<socket_handler>(_next_id++, new_connection, _aux_socket, &dummy);
 
 			h->handler = bind(&server::handle_session, this, _2, _factory->create_session(*h));
 			_handlers.push_back(h);
@@ -244,6 +248,6 @@ namespace coipc
 
 
 		shared_ptr<void> run_server(const char *endpoint_id, const shared_ptr<coipc::server> &factory)
-		{	return shared_ptr<void>(new server(endpoint_id, factory));}
+		{	return make_shared<server>(endpoint_id, factory);	}
 	}
 }

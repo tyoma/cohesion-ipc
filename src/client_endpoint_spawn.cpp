@@ -1,5 +1,7 @@
 #include <coipc/spawn/endpoint.h>
 
+#include "helpers.h"
+
 #include <coipc/exceptions.h>
 
 using namespace std;
@@ -16,15 +18,9 @@ namespace coipc
 
 			_outbound = pipes.first;
 			_thread.reset(new mt::thread([this, &inbound, inbound_stream] {
-				unsigned int n;
-				vector<uint8_t> buffer;
-
-				while (fread(&n, sizeof n, 1, inbound_stream.get()))
-				{
-					buffer.resize(n);
-					fread(buffer.data(), 1, n, inbound_stream.get());
-					inbound.message(const_byte_range(buffer.data(), buffer.size()));
-				}
+				read_messages(inbound, [&] (void *buffer, size_t size) {
+					return fread(buffer, 1, size, inbound_stream.get());
+				}, false);
 				if (_outbound) // We didn't close the pipe - the server disconnected by itself.
 					inbound.disconnect();
 			}));

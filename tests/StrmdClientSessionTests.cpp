@@ -47,7 +47,7 @@ namespace coipc
 				{	archive(data.ivalue), archive(data.svalue);	}
 			}
 
-			begin_test_suite( ClientSessionTests )
+			begin_test_suite( StrmdClientSessionTests )
 				shared_ptr<mocks::channel> outbound;
 				shared_ptr<void> req[10];
 
@@ -562,7 +562,7 @@ namespace coipc
 				class message_on_destruction : public channel
 				{
 				public:
-					message_on_destruction(ClientSessionTests &self, channel &inbound_)
+					message_on_destruction(StrmdClientSessionTests &self, channel &inbound_)
 						: _self(self), _inbound(inbound_)
 					{	}
 
@@ -579,7 +579,7 @@ namespace coipc
 					virtual void message(const_byte_range /*payload*/) override {	}
 
 				private:
-					ClientSessionTests &_self;
+					StrmdClientSessionTests &_self;
 					channel &_inbound;
 				};
 

@@ -5,6 +5,7 @@
 #include <coipc/endpoint_sockets.h>
 #include <coipc/types.h>
 
+#include <functional>
 #include <mt/thread.h>
 #include <list>
 #include <vector>

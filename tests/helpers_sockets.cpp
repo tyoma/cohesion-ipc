@@ -1,5 +1,7 @@
 #include "helpers_sockets.h"
 
+#include <src/helpers.h>
+
 #include <arpa/inet.h>
 #include <coipc/endpoint_sockets.h>
 #include <coipc/noncopyable.h>
@@ -38,7 +40,7 @@ namespace coipc
 		bool sender::operator ()(const void *buffer, size_t sz)
 		{
 			int size_ = static_cast<unsigned int>(sz);
-			sockets::byte_representation<unsigned int> size;
+			byte_representation<unsigned int> size;
 
 			size.value = size_;
 			size.reorder();
@@ -62,7 +64,7 @@ namespace coipc
 
 		bool reader::operator ()(vector<byte> &buffer)
 		{
-			sockets::byte_representation<unsigned int> size;
+			byte_representation<unsigned int> size;
 
 			if (::recv(_socket, size.bytes, sizeof(size.bytes), MSG_WAITALL) < (int)sizeof(size.bytes))
 				return false;

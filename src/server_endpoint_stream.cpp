@@ -1,5 +1,7 @@
 #include <coipc/endpoint_stream.h>
 
+#include "helpers.h"
+
 #include <coipc/cancellable_read.h>
 #include <mt/thread.h>
 
@@ -16,15 +18,11 @@ namespace coipc
 				: _outbound(outbound), _worker([this, &inbound, new_server_session] {
 					try
 					{
-						unsigned int size;
 						auto session = new_server_session(*this);
 
-						for (vector<uint8_t> buffer; _reader.read(inbound, &size, sizeof(size)); )
-						{
-							buffer.resize(size);
-							_reader.read(inbound, buffer.data(), size);
-							session->message(const_byte_range(buffer.data(), size));
-						}
+						read_messages(*session, [&] (void *buffer, size_t size) {
+							return _reader.read(inbound, buffer, size);
+						}, false);
 						session->disconnect();
 					}
 					catch (...)
@@ -44,10 +42,10 @@ namespace coipc
 
 			virtual void message(const_byte_range payload)
 			{
-				unsigned int length = payload.length();
+				const auto length = static_cast<unsigned int>(payload.length());
 
-				fwrite(reinterpret_cast<const char*>(&length), sizeof length, 1, &_outbound);
-				fwrite(reinterpret_cast<const char*>(payload.data()), 1, length, &_outbound);
+				fwrite(&length, sizeof length, 1, &_outbound);
+				fwrite(payload.data(), 1, length, &_outbound);
 				fflush(&_outbound);
 			}
 

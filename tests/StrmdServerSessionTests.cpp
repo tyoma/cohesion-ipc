@@ -41,7 +41,7 @@ namespace coipc
 				{	archive(data.ivalue), archive(data.svalue);	}
 			}
 
-			begin_test_suite( ServerSessionTests )
+			begin_test_suite( StrmdServerSessionTests )
 				mocks::channel outbound;
 				
 				test( AppropriateHandlerIsCalledOnInboundMessage )
