@@ -16,8 +16,16 @@ namespace coipc
 				const std::vector<std::string> &extra_environment, channel &inbound);
 			~client_session();
 
-			static std::pair<std::shared_ptr<FILE> /*outbound*/, std::shared_ptr<FILE> /*inbound*/> spawn(
-				const std::string &spawned_path, const std::vector<std::string> &arguments,
+		private:
+			struct spawned
+			{
+				std::shared_ptr<FILE> to;
+				std::shared_ptr<FILE> from;
+				std::shared_ptr<void> wait_handle;
+			};
+
+		private:
+			static spawned spawn(const std::string &spawned_path, const std::vector<std::string> &arguments,
 				const std::vector<std::string> &extra_environment);
 
 		private:

@@ -2,6 +2,7 @@
 #include <mach/vm_map.h>
 #include <mach-o/dyld.h>
 #include <mach-o/dyld_images.h>
+#include <signal.h>
 #include <vector>
 
 using namespace std;
@@ -10,6 +11,9 @@ namespace coipc
 {
 	namespace tests
 	{
+		bool is_process_running(unsigned int pid)
+		{	return ::kill(pid, 0) == 0;	}
+
 		string executable()
 		{
 			char dummy;

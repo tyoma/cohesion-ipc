@@ -64,8 +64,8 @@ namespace coipc
 			}
 		}
 
-		pair< shared_ptr<FILE>, shared_ptr<FILE> > client_session::spawn(const string &spawned_path,
-			const vector<string> &arguments, const vector<string> &extra_environment)
+		client_session::spawned client_session::spawn(const string &spawned_path, const vector<string> &arguments,
+			const vector<string> &extra_environment)
 		{
 			STARTUPINFOW si = {};
 			PROCESS_INFORMATION process = {};
@@ -99,9 +99,13 @@ namespace coipc
 			if (!::CreateProcessW(NULL, cmdl.data(), NULL, NULL, TRUE, creation_flags, env.data(), NULL, &si, &process))
 				throw server_exe_not_found(("Server executable not found: " + spawned_path).c_str());
 
-			::CloseHandle(process.hProcess);
 			::CloseHandle(process.hThread);
-			return make_pair(stdin_w, stdout_r);
+			return spawned {
+				stdin_w, stdout_r, shared_ptr<void>(process.hProcess, [] (void *hprocess) {
+					::WaitForSingleObject(hprocess, INFINITE);
+					::CloseHandle(hprocess);
+				})
+			};
 		}
 	}
 }

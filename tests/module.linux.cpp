@@ -1,5 +1,6 @@
 #include <dlfcn.h>
 #include <link.h>
+#include <signal.h>
 #include <stdexcept>
 #include <unistd.h>
 
@@ -9,6 +10,9 @@ namespace coipc
 {
 	namespace tests
 	{
+		bool is_process_running(unsigned int pid)
+		{	return ::kill(pid, 0) == 0;	}
+
 		string executable()
 		{
 			char path[1000];

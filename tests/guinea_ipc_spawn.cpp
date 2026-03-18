@@ -7,7 +7,12 @@
 #ifdef WIN32
 	#include <fcntl.h>
 	#include <io.h>
+	#include <process.h>
+
+	#define getpid _getpid
 #else
+	#include <unistd.h>
+
 	extern char **environ;
 #endif
 
@@ -64,6 +69,16 @@ int main(int argc, const char *argv[])
 		l = 0;
 		fwrite(&l, sizeof l, 1, stdout);
 		fflush(stdout);
+	}
+	else if (argc == 2 && argv[1] == (string)"pid")
+	{
+		unsigned pid = getpid();
+		unsigned l = sizeof pid;
+
+		fwrite(&l, sizeof l, 1, stdout);
+		fwrite(&pid, sizeof pid, 1, stdout);
+		fflush(stdout);
+		fread(&pid, 1, 4, stdin);
 	}
 	return 0;
 }

@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <sys/wait.h>
 #include <unistd.h>
 
 using namespace std;
@@ -23,7 +24,7 @@ namespace coipc
 			}
 		}
 
-		pair< shared_ptr<FILE>, shared_ptr<FILE> > client_session::spawn(const string &spawned_path,
+		client_session::spawned client_session::spawn(const string &spawned_path,
 			const vector<string> &arguments, const vector<string> &extra_environment)
 		{
 			// pipes[0]: parent writes, child reads (child's stdin)
@@ -38,12 +39,18 @@ namespace coipc
 				throw bad_alloc();
 			}
 
-			switch(::fork())
+			const auto pid = ::fork();
+
+			switch (pid)
 			{
 			default:
 				// parent
 				::close(pipes[0][0]), ::close(pipes[1][1]);
-				return make_pair(from_fd(pipes[0][1], "w"), from_fd(pipes[1][0], "r"));
+				return spawned {
+					from_fd(pipes[0][1], "w"), from_fd(pipes[1][0], "r"), shared_ptr<void>(nullptr, [pid] (void *) {
+						::waitpid(pid, nullptr, 0);
+					}),
+				};
 
 			case -1:
 				// Forking error...

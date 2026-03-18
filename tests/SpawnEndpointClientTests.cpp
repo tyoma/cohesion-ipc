@@ -20,6 +20,8 @@ namespace coipc
 {
 	namespace tests
 	{
+		bool is_process_running(unsigned int pid);
+
 		namespace
 		{
 			const vector<string> no_args;
@@ -254,6 +256,35 @@ namespace coipc
 				environment.clear();
 				set_difference(e3.begin(), e3.end(), e1.begin(), e1.end(), back_inserter(environment));
 				assert_equivalent(plural + (string)"foo=bazbar" + (string)"lorem=dolor" + (string)"algo algo=alco alco", environment);
+			}
+
+
+			test( SpawnedProcessIsRunningPriorDestructionAndNeverAfter )
+			{
+				for (auto n = 100; n--; )
+				{
+					// INIT
+					auto pid = 0u;
+
+					inbound.on_message = [&] (const_byte_range payload) {
+						pid = *reinterpret_cast<const unsigned *>(payload.data());
+						ready.set();
+					};
+
+					// ACT
+					auto client = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"pid", no_extra,
+						inbound);
+					ready.wait();
+
+					// ASSERT
+					assert_is_true(coipc::tests::is_process_running(pid));
+
+					// ACT
+					client.reset();
+
+					// ASSERT
+					assert_is_false(coipc::tests::is_process_running(pid));
+				}
 			}
 		end_test_suite
 	}

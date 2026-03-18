@@ -7,6 +7,15 @@ namespace coipc
 {
 	namespace tests
 	{
+		bool is_process_running(unsigned int pid)
+		{
+			auto hprocess = ::OpenProcess(SYNCHRONIZE, FALSE, pid);
+			auto ret = ::WaitForSingleObject(hprocess, 0);
+
+			::CloseHandle(hprocess);
+			return ret == WAIT_TIMEOUT;
+		}
+
 		string get_this_module_path()
 		{
 			enum {	length = MAX_PATH,	};
