@@ -9,7 +9,7 @@ namespace coipc
 	namespace spawn
 	{
 		channel_ptr_t connect_client(const std::string &spawned_path, const std::vector<std::string> &arguments,
-			channel &inbound);
+			const std::vector<std::string> &extra_environment, channel &inbound);
 			
 		channel_ptr_t create_session(const std::vector<std::string> &arguments, channel &outbound);
 	}

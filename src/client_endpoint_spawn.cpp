@@ -8,9 +8,10 @@ namespace coipc
 {
 	namespace spawn
 	{
-		client_session::client_session(const string &spawned_path, const vector<string> &arguments, channel &inbound)
+		client_session::client_session(const string &spawned_path, const vector<string> &arguments,
+			const vector<string> &extra_environment, channel &inbound)
 		{
-			auto pipes = spawn(spawned_path, arguments);
+			auto pipes = spawn(spawned_path, arguments, extra_environment);
 			auto inbound_stream = pipes.second;
 
 			_outbound = pipes.first;
@@ -48,7 +49,8 @@ namespace coipc
 		}
 
 
-		channel_ptr_t connect_client(const string &spawned_path, const vector<string> &arguments, channel &inbound)
-		{	return make_shared<client_session>(spawned_path, arguments, inbound);	}
+		channel_ptr_t connect_client(const string &spawned_path, const vector<string> &arguments,
+			const vector<string> &extra_environment, channel &inbound)
+		{	return make_shared<client_session>(spawned_path, arguments, extra_environment, inbound);	}
 	}
 }

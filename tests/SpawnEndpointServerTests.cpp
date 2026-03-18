@@ -19,6 +19,11 @@ namespace coipc
 {
 	namespace tests
 	{
+		namespace
+		{
+			const vector<string> no_extra;
+		}
+
 		begin_test_suite( SpawnEndpointServerTests )
 			mocks::channel inbound;
 			shared_ptr<mocks::server> otherside;
@@ -61,7 +66,7 @@ namespace coipc
 
 				// INIT / ACT
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn_server, plural + otherside_id,
-					inbound);
+					no_extra, inbound);
 
 				// ACT / ASSERT
 				ready.wait();
@@ -90,7 +95,7 @@ namespace coipc
 				};
 
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn_server, plural + otherside_id,
-					inbound);
+					no_extra, inbound);
 
 				connected.wait();
 
@@ -150,7 +155,7 @@ namespace coipc
 				};
 
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn_server, plural + otherside_id,
-					inbound);
+					no_extra, inbound);
 
 				connected.wait();
 

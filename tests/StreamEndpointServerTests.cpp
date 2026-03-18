@@ -16,6 +16,7 @@ namespace coipc
 	namespace tests
 	{
 		begin_test_suite( StreamEndpointServerTests )
+			mt::event ready;
 			list<mt::thread> threads_to_join;
 
 			template <typename T>
@@ -31,7 +32,6 @@ namespace coipc
 			test( NewSessionUnconditionallyGetsCreatedInNewThreadAndThenDestroyedUponServerRelease )
 			{
 				// INIT
-				mt::event session_created_event, session_destroyed_event;
 				auto inbound = create_pipe(); // server reads from pipe1
 				auto outbound = create_pipe(); // server writes to pipe2
 				shared_ptr<mocks::session> created_session;
@@ -41,12 +41,12 @@ namespace coipc
 				auto h = stream::connect(*get<0>(inbound), *get<1>(outbound), [&] (channel &/*outbound*/) {
 					created_session = make_shared<mocks::session>();
 					server_thread_id = mt::this_thread::get_id();
-					session_created_event.set();
+					ready.set();
 					return created_session;
 				});
 
 				// ASSERT
-				session_created_event.wait();
+				ready.wait();
 				assert_not_null(created_session);
 				assert_not_equal(mt::this_thread::get_id(), server_thread_id);
 
@@ -61,13 +61,12 @@ namespace coipc
 			test( MessagesFromInputStreamAreDeliveredToServerSession )
 			{
 				// INIT
-				mt::event session_created, message_received;
 				auto inbound = create_pipe(); // server reads from pipe1
 				auto outbound = create_pipe(); // server writes to pipe2
 				shared_ptr<mocks::session> created_session;
 				auto h = stream::connect(*get<0>(inbound), *get<1>(outbound), [&] (channel &/*outbound*/) {
 					created_session = make_shared<mocks::session>();
-					session_created.set();
+					ready.set();
 					return created_session;
 				});
 				byte payload1[] = { 13, 1, };
@@ -75,14 +74,14 @@ namespace coipc
 				byte payload3[50000] = { 7, 9, 0, 1, 2, 7, };
 				unsigned int size = sizeof payload1;
 
-				session_created.wait();
-				created_session->received_message = [&] {	message_received.set();	};
+				ready.wait();
+				created_session->received_message = [&] {	ready.set();	};
 
 				// ACT
 				fwrite(&size, sizeof size, 1, get<1>(inbound).get());
 				fwrite(payload1, 1, sizeof payload1, get<1>(inbound).get());
 				fflush(get<1>(inbound).get());
-				message_received.wait();
+				ready.wait();
 
 				// ASSERT
 				assert_equal(1u, created_session->payloads_log.size());
@@ -95,7 +94,7 @@ namespace coipc
 				fwrite(&size, sizeof size, 1, get<1>(inbound).get());
 				fwrite(payload2, 1, sizeof payload2, get<1>(inbound).get());
 				fflush(get<1>(inbound).get());
-				message_received.wait();
+				ready.wait();
 				
 				// ASSERT
 				assert_equal(2u, created_session->payloads_log.size());
@@ -108,7 +107,7 @@ namespace coipc
 				fwrite(&size, sizeof size, 1, get<1>(inbound).get());
 				fwrite(payload3, 1, sizeof payload3, get<1>(inbound).get());
 				fflush(get<1>(inbound).get());
-				message_received.wait();
+				ready.wait();
 				
 				// ASSERT
 				assert_equal(3u, created_session->payloads_log.size());
@@ -119,14 +118,13 @@ namespace coipc
 			test( OutboundMessagesAreSentAsExpected )
 			{
 				// INIT
-				mt::event session_created, ready_to_read;
 				auto inbound = create_pipe(); // server reads from pipe1
 				auto outbound = create_pipe(); // server writes to pipe2
 				shared_ptr<mocks::session> session;
 				auto h = stream::connect(*get<0>(inbound), *get<1>(outbound), [&] (channel &outbound) {
 					session = make_shared<mocks::session>();
 					session->outbound = &outbound;
-					session_created.set();
+					ready.set();
 					return session;
 				});
 				byte payload1[] = { 13, 1, };
@@ -135,7 +133,7 @@ namespace coipc
 				unsigned int bytes_to_read;
 				vector<byte> buffer_to_read;
 
-				session_created.wait();
+				ready.wait();
 
 				// ACT
 				run_thread([&] {	session->outbound->message(const_byte_range(payload1, sizeof payload1));	});
@@ -172,7 +170,6 @@ namespace coipc
 			test( SessionReceivesDisconnectWhenWriterSideOfInboundPipeIsClosed )
 			{
 				// INIT
-				mt::event ready;
 				auto inbound = create_pipe(); // server reads from pipe1
 				auto outbound = create_pipe(); // server writes to pipe2
 				shared_ptr<mocks::session> session;
@@ -196,7 +193,6 @@ namespace coipc
 			test( SessionDoesNotReceiveDisconnectWhenServerSessionIsStoppedLocally )
 			{
 				// INIT
-				mt::event ready;
 				auto inbound = create_pipe(); // server reads from pipe1
 				auto outbound = create_pipe(); // server writes to pipe2
 				shared_ptr<mocks::session> session;

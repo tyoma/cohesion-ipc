@@ -7,6 +7,8 @@
 #ifdef WIN32
 	#include <fcntl.h>
 	#include <io.h>
+#else
+	extern char **environ;
 #endif
 
 using namespace std;
@@ -45,6 +47,23 @@ int main(int argc, const char *argv[])
 			fwrite(buffer.data(), 1, buffer.size(), stdout);
 			fflush(stdout);
 		}
+	}
+	else if (argc == 2 && argv[1] == (string)"environment")
+	{
+		unsigned l;
+
+		for (auto e = environ; *e; ++e)
+		{
+			const auto var = *e;
+
+			l = (unsigned)strlen(var);
+			fwrite(&l, sizeof l, 1, stdout);
+			fwrite(var, 1, l, stdout);
+			fflush(stdout);
+		}
+		l = 0;
+		fwrite(&l, sizeof l, 1, stdout);
+		fflush(stdout);
 	}
 	return 0;
 }

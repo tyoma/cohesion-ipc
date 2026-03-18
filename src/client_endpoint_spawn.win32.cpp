@@ -13,6 +13,10 @@ namespace coipc
 	{
 		namespace
 		{
+			enum {
+				creation_flags = CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
+			};
+
 			shared_ptr<FILE> from_handle(HANDLE handle, const char *mode)
 			{
 				auto fd = _open_osfhandle(reinterpret_cast<intptr_t>(handle), 0);
@@ -25,13 +29,26 @@ namespace coipc
 				throw runtime_error("crt stream error");
 			}
 
-			template <typename T>
-			void append_quoted(vector<wchar_t> &command_line, const T &part)
+			vector<wchar_t> initialize_environment(const vector<string> &extra_environment)
 			{
-				command_line.push_back('\"');
-				command_line.insert(command_line.end(), part.begin(), part.end());
-				command_line.push_back('\"');
-				command_line.push_back(' ');
+				vector<wchar_t> merged;
+				size_t length;
+
+				for (auto e = ::GetEnvironmentStringsW(); (length = wcslen(e)); e += length + 1)
+					merged.insert(merged.end(), e, e + length + 1);
+				for (auto &e : extra_environment)
+					merged.insert(merged.end(), e.c_str(), e.c_str() + e.size() + 1);
+				merged.push_back(0);
+				return merged;
+			}
+
+			template <typename T>
+			void append_quoted(vector<wchar_t> &cmdl, const T &part)
+			{
+				cmdl.push_back('\"');
+				cmdl.insert(cmdl.end(), part.begin(), part.end());
+				cmdl.push_back('\"');
+				cmdl.push_back(' ');
 			}
 
 			wstring unicode(const string &s)
@@ -48,11 +65,12 @@ namespace coipc
 		}
 
 		pair< shared_ptr<FILE>, shared_ptr<FILE> > client_session::spawn(const string &spawned_path,
-			const vector<string> &arguments)
+			const vector<string> &arguments, const vector<string> &extra_environment)
 		{
 			STARTUPINFOW si = {};
 			PROCESS_INFORMATION process = {};
-			vector<wchar_t> command_line;
+			vector<wchar_t> cmdl;
+			auto env = initialize_environment(extra_environment);
 			HANDLE hpipes[2];
 
 			si.cb = sizeof si;
@@ -74,11 +92,11 @@ namespace coipc
 			::SetHandleInformation(si.hStdInput, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 			::SetHandleInformation(si.hStdOutput, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
 
-			append_quoted(command_line, unicode(spawned_path));
+			append_quoted(cmdl, unicode(spawned_path));
 			for (auto i = arguments.begin(); i != arguments.end(); ++i)
-				append_quoted(command_line, unicode(*i));
-			command_line.back() = 0;
-			if (!::CreateProcessW(NULL, command_line.data(), NULL, NULL, TRUE, CREATE_NO_WINDOW, NULL, NULL, &si, &process))
+				append_quoted(cmdl, unicode(*i));
+			cmdl.back() = 0;
+			if (!::CreateProcessW(NULL, cmdl.data(), NULL, NULL, TRUE, creation_flags, env.data(), NULL, &si, &process))
 				throw server_exe_not_found(("Server executable not found: " + spawned_path).c_str());
 
 			::CloseHandle(process.hProcess);
