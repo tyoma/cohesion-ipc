@@ -33,7 +33,10 @@ endif()
 
 add_library(cohesion-ipc STATIC ${IPC_SOURCES})
 target_include_directories(cohesion-ipc PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
-target_link_libraries(cohesion-ipc tasker strmd $<$<PLATFORM_ID:Windows>:ws2_32>)
+target_link_libraries(cohesion-ipc tasker $<$<PLATFORM_ID:Windows>:ws2_32>)
+if (NOT COIPC_NO_STRMD)
+	target_link_libraries(cohesion-ipc strmd)
+endif()
 
 add_library(cohesion-ipc.spawn STATIC server_endpoint_spawn.cpp)
 target_include_directories(cohesion-ipc.spawn PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
