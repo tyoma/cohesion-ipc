@@ -65,7 +65,7 @@ namespace coipc
 		}
 
 		client_session::spawned client_session::spawn(const string &spawned_path, const vector<string> &arguments,
-			const vector<string> &extra_environment)
+			const vector<string> &extra_environment, exit_handler_t &&exit_handler)
 		{
 			STARTUPINFOW si = {};
 			PROCESS_INFORMATION process = {};
@@ -101,8 +101,12 @@ namespace coipc
 
 			::CloseHandle(process.hThread);
 			return spawned {
-				stdin_w, stdout_r, shared_ptr<void>(process.hProcess, [] (void *hprocess) {
+				stdin_w, stdout_r, shared_ptr<void>(process.hProcess, [exit_handler] (void *hprocess) {
+					DWORD exit_code;
+
 					::WaitForSingleObject(hprocess, INFINITE);
+					::GetExitCodeProcess(hprocess, &exit_code);
+					exit_handler(static_cast<int>(exit_code));
 					::CloseHandle(hprocess);
 				})
 			};

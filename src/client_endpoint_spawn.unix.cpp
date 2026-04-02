@@ -24,8 +24,8 @@ namespace coipc
 			}
 		}
 
-		client_session::spawned client_session::spawn(const string &spawned_path,
-			const vector<string> &arguments, const vector<string> &extra_environment)
+		client_session::spawned client_session::spawn(const string &spawned_path, const vector<string> &arguments,
+			const vector<string> &extra_environment, exit_handler_t &&exit_handler)
 		{
 			// pipes[0]: parent writes, child reads (child's stdin)
 			// pipes[1]: child writes, parent reads (child's stdout)
@@ -47,8 +47,11 @@ namespace coipc
 				// parent
 				::close(pipes[0][0]), ::close(pipes[1][1]);
 				return spawned {
-					from_fd(pipes[0][1], "w"), from_fd(pipes[1][0], "r"), shared_ptr<void>(nullptr, [pid] (void *) {
-						::waitpid(pid, nullptr, 0);
+					from_fd(pipes[0][1], "w"), from_fd(pipes[1][0], "r"), shared_ptr<void>(nullptr, [exit_handler, pid] (void *) {
+						siginfo_t si = {};
+
+						::waitid(P_PID, pid, &si, WEXITED);
+						exit_handler(si.si_status);
 					}),
 				};
 

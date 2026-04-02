@@ -27,6 +27,7 @@ namespace coipc
 			{
 			public:
 				session();
+				~session();
 
 			public:
 				coipc::channel *outbound;
@@ -70,6 +71,9 @@ namespace coipc
 
 			inline session::session()
 				: disconnections(0)
+			{	}
+
+			inline session::~session()
 			{	}
 
 			inline void session::disconnect() throw()

@@ -29,6 +29,9 @@ namespace coipc
 
 			inline void operator <<(channel &lhs, const vector<byte> &rhs)
 			{	lhs.message(const_byte_range(rhs.data(), rhs.size()));	}
+
+			void ignore_exit(int)
+			{	}
 		}
 
 		begin_test_suite( SpawnEndpointClientTests )
@@ -40,22 +43,24 @@ namespace coipc
 			{
 #ifdef _WIN32
 				// INIT / ACT / ASSERT
-				assert_throws(spawn::connect_client("zubazuba", no_args, no_extra, inbound),
+				assert_throws(spawn::connect_client("zubazuba", no_args, no_extra, inbound, ignore_exit),
 					server_exe_not_found);
 				assert_throws(spawn::connect_client(~constants::c_this_module & normalize::exe("abc\\guinea_ipc_spawn"),
-					no_args, no_extra, inbound), server_exe_not_found);
+					no_args, no_extra, inbound, ignore_exit), server_exe_not_found);
 #else
 				// INIT
 				inbound.on_disconnect = [&] {	ready.set();	};
 
 				// INIT / ACT
-				auto c1 = spawn::connect_client("zubazuba", no_args, no_extra, inbound);
+				auto c1 = spawn::connect_client("zubazuba", no_args, no_extra, inbound, ignore_exit);
 
 				// ACT
 				ready.wait();
 
 				// INIT / ACT
-				auto c2 = spawn::connect_client(~constants::c_this_module & normalize::exe("abc\\guinea_ipc_spawn"), no_args, no_extra, inbound);
+				auto c2 = spawn::connect_client(~constants::c_this_module & normalize::exe("abc\\guinea_ipc_spawn"),
+					no_args, no_extra, inbound, ignore_exit);
+
 				// ACT
 				ready.wait();
 #endif
@@ -68,7 +73,8 @@ namespace coipc
 				inbound.on_disconnect = [&] {	ready.set();	};
 
 				// INIT / ACT
-				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn, no_args, no_extra, inbound);
+				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn, no_args, no_extra, inbound,
+					ignore_exit);
 
 				// ASSERT
 				assert_not_null(outbound);
@@ -88,7 +94,7 @@ namespace coipc
 
 				// INIT / ACT
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn,
-					plural + (string)"sleep" + (string)"100", no_extra, inbound);
+					plural + (string)"sleep" + (string)"100", no_extra, inbound, ignore_exit);
 				sw(); // Reset timer.
 
 				// ACT
@@ -100,7 +106,7 @@ namespace coipc
 
 				// INIT / ACT
 				outbound = spawn::connect_client(constants::c_guinea_ipc_spawn,
-					plural + (string)"sleep" + (string)"300", no_extra, inbound);
+					plural + (string)"sleep" + (string)"300", no_extra, inbound, ignore_exit);
 				sw(); // Reset timer.
 
 				// ACT
@@ -125,7 +131,8 @@ namespace coipc
 
 				// INIT / ACT
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn,
-					plural + (string)"seq" + (string)"Lorem" + (string)"ipsum" + (string)"amet dolor", no_extra, inbound);
+					plural + (string)"seq" + (string)"Lorem" + (string)"ipsum" + (string)"amet dolor", no_extra,
+					inbound, ignore_exit);
 
 				// ACT
 				ready.wait();
@@ -143,7 +150,8 @@ namespace coipc
 
 				// INIT / ACT
 				outbound = spawn::connect_client(constants::c_guinea_ipc_spawn,
-					plural + (string)"seq" + (string)"Quick brown fox" + (string)"jumps over the\nlazy dog", no_extra, inbound);
+					plural + (string)"seq" + (string)"Quick brown fox" + (string)"jumps over the\nlazy dog", no_extra,
+					inbound, ignore_exit);
 
 				// ACT
 				ready.wait();
@@ -173,7 +181,8 @@ namespace coipc
 					ready.set();
 				};
 
-				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"echo", no_extra, inbound);
+				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"echo", no_extra,
+					inbound, ignore_exit);
 
 				// ACT
 				*outbound << data1;
@@ -203,7 +212,8 @@ namespace coipc
 			{
 				// INIT
 				auto disconnected = false;
-				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"echo", no_extra, inbound);
+				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"echo", no_extra,
+					inbound, ignore_exit);
 
 				inbound.on_disconnect = [&] {	disconnected = true;	};
 
@@ -229,19 +239,20 @@ namespace coipc
 
 				// ACT
 				auto client = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"environment",
-					no_extra, inbound);
+					no_extra, inbound, ignore_exit);
 				ready.wait();
 
 				auto e1 = std::move(environment);
 
 				client = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"environment",
-					plural + (string)"foo=foobar" + (string)"lorem=lorem ipsum amet dolor", inbound);
+					plural + (string)"foo=foobar" + (string)"lorem=lorem ipsum amet dolor", inbound, ignore_exit);
 				ready.wait();
 
 				auto e2 = std::move(environment);
 
 				client = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"environment",
-					plural + (string)"foo=bazbar" + (string)"lorem=dolor" + (string)"algo algo=alco alco", inbound);
+					plural + (string)"foo=bazbar" + (string)"lorem=dolor" + (string)"algo algo=alco alco", inbound,
+					ignore_exit);
 				ready.wait();
 
 				auto e3 = std::move(environment);
@@ -273,7 +284,7 @@ namespace coipc
 
 					// ACT
 					auto client = spawn::connect_client(constants::c_guinea_ipc_spawn, plural + (string)"pid", no_extra,
-						inbound);
+						inbound, ignore_exit);
 					ready.wait();
 
 					// ASSERT
@@ -285,6 +296,37 @@ namespace coipc
 					// ASSERT
 					assert_is_false(coipc::tests::is_process_running(pid));
 				}
+			}
+
+
+			test( ExitHandlerIsInvokedWithAnExitCodeFromSpawnedProcess )
+			{
+				// INIT
+				auto exit_code = -1;
+
+				// ACT
+				auto client = spawn::connect_client(constants::c_guinea_ipc_spawn,
+					plural + (string)"exit" + (string)"123", no_extra, inbound, [&] (int code) {
+
+					exit_code = code;
+					ready.set();
+				});
+				ready.wait();
+
+				// ASSERT
+				assert_equal(123, exit_code);
+
+				// ACT
+				client = spawn::connect_client(constants::c_guinea_ipc_spawn,
+					plural + (string)"exit" + (string)"171", no_extra, inbound, [&] (int code) {
+
+					exit_code = code;
+					ready.set();
+				});
+				ready.wait();
+
+				// ASSERT
+				assert_equal(171, exit_code);
 			}
 		end_test_suite
 	}

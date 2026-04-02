@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../endpoint_spawn.h"
+#include "../endpoint.h"
 
+#include <functional>
 #include <mt/thread.h>
 #include <stdio.h>
 
@@ -12,8 +13,11 @@ namespace coipc
 		class client_session : public channel
 		{
 		public:
+			typedef std::function<void (int exit_code)> exit_handler_t;
+
+		public:
 			client_session(const std::string &spawned_path, const std::vector<std::string> &arguments,
-				const std::vector<std::string> &extra_environment, channel &inbound);
+				const std::vector<std::string> &extra_environment, channel &inbound, exit_handler_t &&exit_handler);
 			~client_session();
 
 		private:
@@ -26,7 +30,7 @@ namespace coipc
 
 		private:
 			static spawned spawn(const std::string &spawned_path, const std::vector<std::string> &arguments,
-				const std::vector<std::string> &extra_environment);
+				const std::vector<std::string> &extra_environment, exit_handler_t &&exit_handler);
 
 		private:
 			virtual void disconnect() throw() override;

@@ -2,6 +2,7 @@
 
 #include "helpers.h"
 
+#include <coipc/endpoint_spawn.h>
 #include <coipc/exceptions.h>
 
 using namespace std;
@@ -11,9 +12,9 @@ namespace coipc
 	namespace spawn
 	{
 		client_session::client_session(const string &spawned_path, const vector<string> &arguments,
-			const vector<string> &extra_environment, channel &inbound)
+			const vector<string> &extra_environment, channel &inbound, exit_handler_t &&exit_handler)
 		{
-			auto spawned = spawn(spawned_path, arguments, extra_environment);
+			auto spawned = spawn(spawned_path, arguments, extra_environment, std::move(exit_handler));
 
 			_outbound = std::move(spawned.to);
 			_thread.reset(new mt::thread([this, &inbound, spawned] {
@@ -45,7 +46,10 @@ namespace coipc
 
 
 		channel_ptr_t connect_client(const string &spawned_path, const vector<string> &arguments,
-			const vector<string> &extra_environment, channel &inbound)
-		{	return make_shared<client_session>(spawned_path, arguments, extra_environment, inbound);	}
+			const vector<string> &extra_environment, channel &inbound, exit_handler_t &&exit_handler)
+		{
+			return make_shared<client_session>(spawned_path, arguments, extra_environment, inbound,
+				std::move(exit_handler));
+		}
 	}
 }

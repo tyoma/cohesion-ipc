@@ -80,5 +80,9 @@ int main(int argc, const char *argv[])
 		fflush(stdout);
 		fread(&pid, 1, 4, stdin);
 	}
+	else if (argc == 3 && argv[1] == (string)"exit")
+	{
+		return atoi(argv[2]);
+	}
 	return 0;
 }

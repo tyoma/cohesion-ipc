@@ -22,6 +22,9 @@ namespace coipc
 		namespace
 		{
 			const vector<string> no_extra;
+
+			void ignore_exit(int)
+			{	}
 		}
 
 		begin_test_suite( SpawnEndpointServerTests )
@@ -66,7 +69,7 @@ namespace coipc
 
 				// INIT / ACT
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn_server, plural + otherside_id,
-					no_extra, inbound);
+					no_extra, inbound, ignore_exit);
 
 				// ACT / ASSERT
 				ready.wait();
@@ -95,7 +98,7 @@ namespace coipc
 				};
 
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn_server, plural + otherside_id,
-					no_extra, inbound);
+					no_extra, inbound, ignore_exit);
 
 				connected.wait();
 
@@ -155,7 +158,7 @@ namespace coipc
 				};
 
 				auto outbound = spawn::connect_client(constants::c_guinea_ipc_spawn_server, plural + otherside_id,
-					no_extra, inbound);
+					no_extra, inbound, ignore_exit);
 
 				connected.wait();
 
