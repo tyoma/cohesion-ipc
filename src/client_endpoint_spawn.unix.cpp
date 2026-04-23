@@ -1,5 +1,8 @@
 #include <coipc/spawn/endpoint.h>
 
+#include <coipc/exceptions.h>
+
+#include <fcntl.h>
 #include <memory>
 #include <stdexcept>
 #include <sys/wait.h>
@@ -13,41 +16,44 @@ namespace coipc
 {
 	namespace spawn
 	{
-		namespace
-		{
-			shared_ptr<FILE> from_fd(int fd, const char *mode)
-			{
-				if (auto stream = fdopen(fd, mode))
-					return shared_ptr<FILE>(stream, &fclose);
-				::close(fd);
-				throw runtime_error("crt stream error");
-			}
-		}
-
 		client_session::spawned client_session::spawn(const string &spawned_path, const vector<string> &arguments,
 			const vector<string> &extra_environment, exit_handler_t &&exit_handler)
 		{
-			// pipes[0]: parent writes, child reads (child's stdin)
-			// pipes[1]: child writes, parent reads (child's stdout)
-			int pipes[2][2];
-
-			if (::pipe(pipes[0]) < 0)
-				throw bad_alloc();
-			if (::pipe(pipes[1]) < 0)
+			struct anonymous_pipe
 			{
-				::close(pipes[0][0]), ::close(pipes[0][1]);
-				throw bad_alloc();
-			}
+				anonymous_pipe()
+				{
+					int p[2];
+					auto from_fd = [] (int fd, const char *mode) {
+						auto stream = fdopen(fd, mode);
+						return stream ? shared_ptr<FILE>(stream, &fclose) : (::close(fd), nullptr);
+					};
+
+					if (::pipe(p) < 0)
+						throw bad_alloc();
+					read = from_fd(p[0], "r");
+					write = from_fd(p[1], "w");
+					if (!read || !write)
+						throw runtime_error("crt stream error");
+				}
+
+				shared_ptr<FILE> read, write;
+			} to, from, from_error;
+
+			fcntl(fileno(from_error.write.get()), F_SETFD, FD_CLOEXEC);
 
 			const auto pid = ::fork();
+			int exec_error;
 
 			switch (pid)
 			{
 			default:
 				// parent
-				::close(pipes[0][0]), ::close(pipes[1][1]);
+				from_error.write.reset();
+				if (1 == fread(&exec_error, sizeof(exec_error), 1, from_error.read.get()))
+					throw server_exe_not_found(("Failed to execute: " + spawned_path + ", error: " + to_string(exec_error)).c_str());
 				return spawned {
-					from_fd(pipes[0][1], "w"), from_fd(pipes[1][0], "r"), shared_ptr<void>(nullptr, [exit_handler, pid] (void *) {
+					to.write, from.read, shared_ptr<void>(nullptr, [exit_handler, pid] (void *) {
 						siginfo_t si = {};
 
 						::waitid(P_PID, pid, &si, WEXITED);
@@ -61,8 +67,8 @@ namespace coipc
 
 			case 0:
 				// child
-				::close(pipes[0][1]), ::close(pipes[1][0]);
-				::dup2(pipes[0][0], STDIN_FILENO), ::dup2(pipes[1][1], STDOUT_FILENO);
+				to.write.reset(), from.read.reset(), from_error.read.reset();
+				::dup2(fileno(to.read.get()), STDIN_FILENO), ::dup2(fileno(from.write.get()), STDOUT_FILENO);
 
 				auto spawned_path_ = spawned_path;
 				auto arguments_ = arguments;
@@ -78,9 +84,10 @@ namespace coipc
 				for (auto &i : extra_environment_)
 					env.push_back(&i[0]);
 				env.push_back(nullptr);
-				if (::execve(spawned_path.c_str(), argv.data(), env.data()) < 0)
-					exit(-1);
-				throw 0;
+				::execve(spawned_path.c_str(), argv.data(), env.data());
+				exec_error = errno;
+				fwrite(&exec_error, sizeof(exec_error), 1, from_error.write.get());
+				exit(-1);
 			}
 		}
 	}

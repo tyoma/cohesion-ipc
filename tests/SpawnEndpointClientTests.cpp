@@ -41,29 +41,11 @@ namespace coipc
 
 			test( AttemptToSpawnAMissingFileThrows )
 			{
-#ifdef _WIN32
 				// INIT / ACT / ASSERT
 				assert_throws(spawn::connect_client("zubazuba", no_args, no_extra, inbound, ignore_exit),
 					server_exe_not_found);
 				assert_throws(spawn::connect_client(~constants::c_this_module & normalize::exe("abc\\guinea_ipc_spawn"),
 					no_args, no_extra, inbound, ignore_exit), server_exe_not_found);
-#else
-				// INIT
-				inbound.on_disconnect = [&] {	ready.set();	};
-
-				// INIT / ACT
-				auto c1 = spawn::connect_client("zubazuba", no_args, no_extra, inbound, ignore_exit);
-
-				// ACT
-				ready.wait();
-
-				// INIT / ACT
-				auto c2 = spawn::connect_client(~constants::c_this_module & normalize::exe("abc\\guinea_ipc_spawn"),
-					no_args, no_extra, inbound, ignore_exit);
-
-				// ACT
-				ready.wait();
-#endif
 			}
 
 
