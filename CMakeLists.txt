@@ -19,10 +19,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/_lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/_bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/_bin)
 
-if (UNIX)
-	set(MP_MT_GENERIC 1)
-	add_definitions(-DMP_MT_GENERIC)
-endif()
 add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
 
 # add_definitions(-D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
@@ -32,6 +28,7 @@ set(GCC_CLANG_COMPILER_OPTIONS_CXX ${GCC_CLANG_COMPILER_OPTIONS_CXX}
 	-Wall -Wextra -Wpedantic
 	-Wno-missing-field-initializers
 	-Wno-implicit-fallthrough
+	-Wno-delete-non-abstract-non-virtual-dtor
 )
 
 add_compile_options(
