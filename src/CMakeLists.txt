@@ -40,4 +40,4 @@ endif()
 
 add_library(cohesion-ipc.spawn STATIC server_endpoint_spawn.cpp)
 target_include_directories(cohesion-ipc.spawn PUBLIC ${CMAKE_CURRENT_LIST_DIR}/..)
-target_link_libraries(cohesion-ipc mt)
+target_link_libraries(cohesion-ipc.spawn mt)

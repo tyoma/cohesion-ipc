@@ -3,6 +3,7 @@
 #include "../endpoint.h"
 
 #include <functional>
+#include <mt/mutex.h>
 #include <mt/thread.h>
 #include <stdio.h>
 
@@ -37,6 +38,7 @@ namespace coipc
 			virtual void message(const_byte_range payload) override;
 
 		private:
+			mt::mutex _mtx;
 			std::unique_ptr<mt::thread> _thread;
 			std::shared_ptr<FILE> _outbound;
 		};

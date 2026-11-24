@@ -6,6 +6,7 @@
 #include <coipc/types.h>
 
 #include <functional>
+#include <mt/mutex.h>
 #include <mt/thread.h>
 #include <list>
 #include <vector>
@@ -37,6 +38,7 @@ namespace coipc
 			handler_t handler;
 
 		private:
+			mt::mutex _mtx;
 			socket_handle _socket;
 			const socket_handle &_aux_socket;
 		};

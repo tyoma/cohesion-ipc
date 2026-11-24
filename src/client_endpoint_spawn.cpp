@@ -38,6 +38,7 @@ namespace coipc
 		void client_session::message(const_byte_range payload)
 		{
 			const auto size = static_cast<unsigned int>(payload.length());
+			mt::lock_guard<mt::mutex> l(_mtx);
 
 			fwrite(&size, sizeof size, 1, _outbound.get());
 			fwrite(payload.begin(), 1, payload.length(), _outbound.get());

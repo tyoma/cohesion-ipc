@@ -3,6 +3,7 @@
 #include "helpers.h"
 
 #include <coipc/cancellable_read.h>
+#include <mt/mutex.h>
 #include <mt/thread.h>
 
 using namespace std;
@@ -43,6 +44,7 @@ namespace coipc
 			virtual void message(const_byte_range payload)
 			{
 				const auto length = static_cast<unsigned int>(payload.length());
+				mt::lock_guard<mt::mutex> l(_mtx);
 
 				fwrite(&length, sizeof length, 1, &_outbound);
 				fwrite(payload.data(), 1, length, &_outbound);
@@ -50,6 +52,7 @@ namespace coipc
 			}
 
 		private:
+			mt::mutex _mtx;
 			FILE &_outbound;
 			cancellable_read _reader;
 			mt::thread _worker;

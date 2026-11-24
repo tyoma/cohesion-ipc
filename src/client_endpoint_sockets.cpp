@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <logger/log.h>
 #include <mt/thread.h>
+#include <mt/mutex.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <vector>
@@ -33,6 +34,7 @@ namespace coipc
 			static int open(const host_port &hp);
 
 		private:
+			mt::mutex _mtx;
 			sockets_initializer _initializer;
 			socket_handle _socket;
 			mt::thread _thread;
@@ -66,6 +68,7 @@ namespace coipc
 		{
 			const auto size_ = static_cast<unsigned int>(payload.length());
 			byte_representation<unsigned int> size;
+			mt::lock_guard<mt::mutex> l(_mtx);
 
 			size.value = size_;
 			size.reorder();

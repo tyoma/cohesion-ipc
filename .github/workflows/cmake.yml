@@ -16,8 +16,8 @@ jobs:
     strategy:
       matrix:
         config:
-          - os: ubuntu-22.04
-          - os: windows-2022
+          - os: ubuntu-latest
+          - os: windows-latest
           - os: macos-latest
 
     steps:

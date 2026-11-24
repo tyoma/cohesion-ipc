@@ -121,6 +121,7 @@ namespace coipc
 		void socket_handler::message(const_byte_range payload)
 		{
 			unsigned int size = static_cast<unsigned int>(payload.length());
+			mt::lock_guard<mt::mutex> l(_mtx);
 
 			send_scalar(_socket, size);
 			::send(_socket, reinterpret_cast<const char *>(payload.begin()), size, MSG_NOSIGNAL);

@@ -2,6 +2,8 @@
 
 #include "helpers.h"
 
+#include <mt/mutex.h>
+
 #ifdef WIN32
 	#include <fcntl.h>
 	#include <io.h>
@@ -26,6 +28,7 @@ int main(int argc, const char *argv[])
 		virtual void message(const_byte_range payload)
 		{
 			auto size = static_cast<unsigned int>(payload.length());
+			mt::lock_guard<mt::mutex> l(_mtx);
 
 			fwrite(&size, sizeof size, 1, _stream);
 			fwrite(payload.begin(), 1, payload.length(), _stream);
@@ -33,6 +36,7 @@ int main(int argc, const char *argv[])
 		}
 
 	private:
+		mt::mutex _mtx;
 		FILE *const _stream;
 	};
 
